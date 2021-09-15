@@ -34,6 +34,8 @@ const (
 	OnlyExternalEnabled
 )
 
+const hidingIndicator = "docgen: hide"
+
 // ParseFile parses a proto file.
 func ParseFile(file *FileDescWrapper, onlyExternal OnlyExternalOpt) (*File, error) {
 	pkgName := file.GetPackage()
@@ -165,10 +167,12 @@ func parseValues(
 			comment := comments[p]
 			comment = nonNilComment(comment)
 			comment.Leading = strings.TrimPrefix(comment.Leading, typeName+"_")
-			res = append(res, &Value{
-				Name:    v.GetName(),
-				Comment: comment,
-			})
+			if !strings.Contains(comment.Leading, hidingIndicator) {
+				res = append(res, &Value{
+					Name:    v.GetName(),
+					Comment: comment,
+				})
+			}
 		}
 	}
 	return res
@@ -458,7 +462,6 @@ func generateResponseExample(messages map[string]*Message, name string) (string,
 
 // normalizeRequestFields is used to filter out all fields marked with an predefined indicator of a request message.
 func normalizeRequestFields(messages map[string]*Message) {
-	const hidingIndicator = "docgen: hide"
 	for _, message := range messages {
 		var filtered []*Field
 		for _, f := range message.Fields {
