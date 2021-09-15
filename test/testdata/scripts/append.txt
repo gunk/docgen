@@ -1,0 +1,174 @@
+exec gunk generate first.gunk
+exec gunk generate second.gunk
+cmp all.md all.md.golden
+
+-- .gunkconfig --
+[generate]
+command=docgen
+mode=append
+-- first.gunk --
+// +gunk openapiv2.Swagger{
+//         Swagger: "2.0",
+//         Info: openapiv2.Info{
+//                 Title:       "First API",
+//                 Version:     "1.0.0",
+//         },
+//         Host: "openbank.com",
+//         BasePath: "/path",
+//         Schemes: []openapiv2.Scheme{
+//                 openapiv2.HTTPS,
+//         },
+// }
+package docgentest
+
+import (
+	"github.com/gunk/opt/http"
+	"github.com/gunk/opt/openapiv2"
+)
+
+type Foo struct {
+	// Bar is a string
+	Bar string `pb:"1" json:"bar"`
+}
+
+// FooService provides foo operations.
+type FooService interface {
+	// GetFoo gets foo
+	//
+	// +gunk http.Match{
+	//         Method: "GET",
+	//         Path:   "/v1/foo",
+	// }
+	// +gunk openapiv2.Operation{
+	//         Tags:        []string{"Foo"},
+	//         Summary: "Gets foo",
+	//         Responses: map[string]openapiv2.Response{
+	//                 "200": openapiv2.Response{
+	//                 },
+	//         },
+	// }
+	GetFoo() Foo
+}
+-- second.gunk --
+// +gunk openapiv2.Swagger{
+//         Swagger: "2.0",
+//         Info: openapiv2.Info{
+//                 Title:       "Second API",
+//                 Version:     "1.0.0",
+//         },
+//         Host: "openbank.com",
+//         BasePath: "/path",
+//         Schemes: []openapiv2.Scheme{
+//                 openapiv2.HTTPS,
+//         },
+// }
+package docgentest
+
+import (
+	"github.com/gunk/opt/http"
+	"github.com/gunk/opt/openapiv2"
+)
+
+type Baz struct {
+	// Qux is an int
+	Qux int `pb:"1" json:"qux"`
+}
+
+// BazService provides baz operations.
+type SecondService interface {
+	// GetBaz gets baz
+	//
+	// +gunk http.Match{
+	//         Method: "GET",
+	//         Path:   "/v1/baz",
+	// }
+	// +gunk openapiv2.Operation{
+	//         Tags:        []string{"Baz"},
+	//         Summary: "Gets baz",
+	//         Responses: map[string]openapiv2.Response{
+	//                 "200": openapiv2.Response{
+	//                 },
+	//         },
+	// }
+	GetBaz() Baz
+}
+-- all.md.golden --
+# First API v1.0.0
+
+* Host `https://openbank.com`
+
+* Base Path `/path`
+
+## Gets foo
+
+```sh
+curl -X GET \
+	https://openbank.com/path/v1/foo \
+	-H 'x-api-key: USE_YOUR_API_KEY'
+```
+
+### HTTP Request
+
+`GET https://openbank.com/path/v1/foo`
+
+### Responses
+
+#### Response body
+
+| Name | Type   | Description     |
+|------|--------|-----------------|
+| bar  | string | Bar is a string |
+
+Example:
+
+```json
+{
+  "bar": "string"
+}
+```
+
+#### Response codes
+
+| Status | Description |
+|--------|-------------|
+| 200    |             |
+
+# Second API v1.0.0
+
+* Host `https://openbank.com`
+
+* Base Path `/path`
+
+## Gets baz
+
+```sh
+curl -X GET \
+	https://openbank.com/path/v1/baz \
+	-H 'x-api-key: USE_YOUR_API_KEY'
+```
+
+### HTTP Request
+
+`GET https://openbank.com/path/v1/baz`
+
+### Responses
+
+#### Response body
+
+| Name | Type  | Description   |
+|------|-------|---------------|
+| qux  | int32 | Qux is an int |
+
+Example:
+
+```json
+{
+  "qux": "int32"
+}
+```
+
+#### Response codes
+
+| Status | Description |
+|--------|-------------|
+| 200    |             |
