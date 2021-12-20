@@ -1,0 +1,178 @@
+# note that Account's MajorType is in a different package "types",
+# but still generated in the transactions/all.md annex
+# (and also types/types.md, but we don't check that here)
+exec gunk generate ./...
+cmp transactions/all.md transactions/all.md.golden
+
+-- .gunkconfig --
+[generate]
+command=docgen
+-- types/types.gunk --
+package types
+
+// MajorType describes the type of the account.
+type MajorType int
+
+const (
+    // docgen: hide
+    UnknownMajorType MajorType = iota
+    // Checking account.
+    Checking
+    // Saving account.
+    Saving
+    // TimeDeposit for a time deposit account.
+    TimeDeposit
+    // CommercialLoan for a business loan account.
+    CommercialLoan
+    // MortgageLoan for a home loan account.
+    MortgageLoan
+    // ConsumerLoan for a consumer loan account.
+    ConsumerLoan
+    // EvilLoan is evil. docgen: hide
+    EvilLoan
+)
+
+-- transactions/transactions.gunk --
+// +gunk openapiv2.Swagger{
+//         Swagger: "2.0",
+//         Info: openapiv2.Info{
+//                 Title:       "Transactions API",
+//                 Description: "Provides create and read operations on the transaction resource.",
+//                 Version:     "1.0.0",
+//         },
+//         Host:     "openbank.com",
+//         BasePath: "/path",
+//         Schemes: []openapiv2.Scheme{
+//                 openapiv2.HTTPS,
+//         },
+// }
+package transactions
+
+import (
+	"github.com/gunk/opt/http"
+	"github.com/gunk/opt/openapiv2"
+
+	types "testdata.tld/util/types"
+)
+
+// Transaction defines a transaction.
+type Transaction struct {
+	// To is the account to credit.
+	To Account `pb:"1" json:"to"`
+
+	// From is the account to debit.
+	From Account `pb:"2" json:"from"`
+}
+
+// Account represents an account.
+type Account struct {
+	// Number is the account number.
+	Number string `pb:"1" json:"number"`
+
+	// MajorType is the type of account. (docgen: hide)
+	MajorType types.MajorType `pb:"2" json:"major_type"`
+}
+
+// GetTransactionRequest is the request envelope to get an transaction by its identifier.
+type GetTransactionRequest struct {
+	// TransactionID is the unique identifier of a transaction.
+	TransactionID string `pb:"1" json:"transaction_id"`
+}
+
+// TransactionService provides transaction-related operations.
+type TransactionService interface {
+	// GetTransaction retrieves the details of a transaction.
+	//
+	// +gunk http.Match{
+	//         Method: "POST",
+	//         Path:   "/v1/transactions",
+	//         Body:   "*",
+	// }
+	// +gunk openapiv2.Operation{
+	//         Tags:        []string{"Transaction"},
+	//         Description: "Retrieves all data from a transaction, selected by the `transaction_id` you supplied.",
+	//         Summary:     "Retrieve a transaction",
+	//         Responses: map[string]openapiv2.Response{
+	//                 "200": openapiv2.Response{
+	//                         Description: "Request executed successfully.",
+	//                         Schema: openapiv2.Schema{
+	//                                 JSONSchema: openapiv2.JSONSchema{
+	//                                         Ref: "#/definitions/transactionsTransaction",
+	//                                 },
+	//                         },
+	//                 },
+	//                 "404": openapiv2.Response{
+	//                         Description: "Returned when the resource is not found.",
+	//                 },
+	//         },
+	// }
+	GetTransaction(GetTransactionRequest) Transaction
+}
+-- transactions/all.md.golden --
+# Transactions API v1.0.0
+
+Provides create and read operations on the transaction resource.
+
+* Host `https://openbank.com`
+
+* Base Path `/path`
+
+## Retrieve a transaction
+
+Retrieves all data from a transaction, selected by the `transaction_id` you supplied.
+
+```sh
+curl -X POST \
+	https://openbank.com/path/v1/transactions \
+	-H 'x-api-key: USE_YOUR_API_KEY' \
+	-d '{
+		"transaction_id": "string"
+	}'
+```
+
+### HTTP Request
+
+`POST https://openbank.com/path/v1/transactions`
+
+### Body Parameters
+
+| Name           | Type   | Description                                              |
+|----------------|--------|----------------------------------------------------------|
+| transaction_id | string | TransactionID is the unique identifier of a transaction. |
+
+### Responses
+
+#### Response body
+
+| Name | Type    | Description                   |
+|------|---------|-------------------------------|
+| to   | Account | To is the account to credit.  |
+| from | Account | From is the account to debit. |
+
+##### Objects
+
+###### Account
+
+| Name   | Type   | Description                   |
+|--------|--------|-------------------------------|
+| number | string | Number is the account number. |
+
+Example:
+
+```json
+{
+  "to": {
+    "number": "string"
+  },
+  "from": {
+    "number": "string"
+  }
+}
+```
+
+#### Response codes
+
+| Status | Description                              |
+|--------|------------------------------------------|
+| 200    | Request executed successfully.           |
+| 404    | Returned when the resource is not found. |
