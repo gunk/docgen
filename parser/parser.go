@@ -297,6 +297,9 @@ func populateNestedMessages(
 		m := stack[0]
 		stack = stack[1:]
 		for _, f := range m.Fields {
+			if strings.Contains(f.Comment.Leading, hidingIndicator) || strings.Contains(f.Comment.Trailing, hidingIndicator) {
+				continue
+			}
 			typ := f.Type
 			name := typ.QualifiedName
 			if !(typ.IsMessage || typ.IsEnum) || seen[name] {
